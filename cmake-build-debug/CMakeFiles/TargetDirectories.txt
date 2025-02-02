@@ -1,0 +1,3 @@
+C:/Users/sheho/CLionProjects/coursework1/cmake-build-debug/CMakeFiles/coursework1.dir
+C:/Users/sheho/CLionProjects/coursework1/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/sheho/CLionProjects/coursework1/cmake-build-debug/CMakeFiles/rebuild_cache.dir
