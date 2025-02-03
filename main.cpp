@@ -3,16 +3,16 @@
 int main() {
 
     std::cout << "==== BigNumber ====" << std::endl;
-    BigNumber a(12345);
-    BigNumber b("6789");
+    BigNumber a(456);
+    BigNumber b("123");
     std::cout << "a = " << a << std::endl;
     std::cout << "b = " << b << std::endl;
 
     BigNumber c = a + b;
     std::cout << "a + b = " << c << std::endl;
-
-    BigNumber d = a - BigNumber(1);
-    std::cout << "a - 2345 = " << d << std::endl;
+    BigNumber f(123);
+    BigNumber d = a - f;
+    std::cout << "a - " << f << " = " << d << std::endl;
 
     BigNumber e = a * b;
     std::cout << "a * b = " << e << std::endl;

@@ -80,8 +80,11 @@ BigNumber BigNumber::operator+(const BigNumber &other) const {
 }
 
 BigNumber BigNumber::operator-(const BigNumber &other) const {
-    if (*this < other)
+    if (*this < other){
         std::cout << "Negative result not supported\n";
+        return -1;
+    }
+
     BigNumber result;
     int carry = 0;
     List temp1(*this), temp2(other);
@@ -108,6 +111,11 @@ BigNumber BigNumber::operator-(const BigNumber &other) const {
         if (!temp2.EoList()) temp2.Move();
     }
     result.RemoveTrailingZeros();
+
+    result.Reset();
+    if (result.Length() > 1 && result.GetCurrent() == 0) {
+        result.Del();
+    }
     return result;
 }
 
