@@ -3,27 +3,24 @@
 
 using namespace std;
 
-// Конструктор: создаёт пустой список
 List::List() : top(nullptr), marker(nullptr), pred(nullptr) {}
 
-// Конструктор копирования
 List::List(const List &other) : top(nullptr), marker(nullptr), pred(nullptr) {
     Node *current = other.top;
-    Node *tail = nullptr; // Указатель на последний добавленный узел
+    Node *tail = nullptr;
 
     while (current) {
-        Node *newNode = new Node(current->data); // Создаём новый узел
+        Node *newNode = new Node(current->data);
         if (!top) {
-            top = newNode; // Если список пуст, новый узел становится головой
+            top = newNode;
         } else {
-            tail->next = newNode; // Присоединяем новый узел к концу списка
+            tail->next = newNode;
         }
-        tail = newNode; // Обновляем указатель на последний узел
+        tail = newNode;
         current = current->next;
     }
 }
 
-// Деструктор
 List::~List() {
     while (top) {
         Node *temp = top;
@@ -32,75 +29,75 @@ List::~List() {
     }
 }
 
-// Установить маркер на начало списка
 void List::Reset() {
     marker = top;
     pred = nullptr;
 }
 
-// Доступ к информационному полю текущего элемента
 int List::GetCurrent() const {
-    if (!marker) throw runtime_error("Marker is null");
+    if (!marker) {
+        cout << "Marker is null\n";
+        return -1;
+    }
     return marker->data;
 }
 
-// Сдвиг по списку на один шаг
 void List::Move() {
-    if (!marker) throw runtime_error("Marker is null");
+    if (!marker) {
+        cout << "Marker is null\n";
+        return;
+    }
     pred = marker;
     marker = marker->next;
 }
 
-// Проверка, находится ли маркер на конце списка
 bool List::EoList() const {
     return marker == nullptr;
 }
 
-// Добавить элемент перед текущим
 void List::AddBefore(int value) {
     Node *newNode = new Node(value);
-    if (!pred) { // Если добавляем перед первым элементом
+    if (!pred) {
         newNode->next = top;
         top = newNode;
     } else {
         newNode->next = pred->next;
         pred->next = newNode;
     }
-    marker = newNode; // Перемещаем маркер на новый элемент
+    marker = newNode;
 }
 
-// Добавить элемент после текущего
 void List::Add(int value) {
     Node *newNode = new Node(value);
-    if (!top) { // Если список пуст
+    if (!top) {
         top = marker = newNode;
     } else {
         Node *current = top;
-        while (current->next) { // Находим последний узел
+        while (current->next) {
             current = current->next;
         }
-        current->next = newNode; // Добавляем новый узел в конец
+        current->next = newNode;
     }
 }
 
-// Удалить текущий элемент
 void List::Del() {
-    if (!marker) throw runtime_error("Marker is null");
-
-    if (!pred) { // Если удаляем первый элемент
+    if (!marker) {
+        cout << "Marker is null\n";
+        return;
+    }
+    if (!pred) {
         Node *temp = top;
         top = marker->next;
-        marker = top; // Перемещаем маркер на новый первый элемент
+        marker = top;
         delete temp;
     } else {
         Node *temp = marker;
         pred->next = marker->next;
-        marker = marker->next; // Перемещаем маркер на следующий элемент
+        marker = marker->next;
         delete temp;
     }
 }
 
-// Метод для сложения двух списков
 List List::addLists(const List &list1, const List &list2) const {
     List result;
     Node *a = list1.top;
@@ -126,29 +123,26 @@ List List::addLists(const List &list1, const List &list2) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const List &list) {
-    List::Node *current = list.top; // Начинаем с головы списка
+    List::Node *current = list.top;
     while (current) {
-        os << current->data; // Выводим значение текущего узла
+        os << current->data;
         if (current->next) {
-            os << " -> "; // Разделитель между элементами
+            os << " -> ";
         }
         current = current->next;
     }
     return os;
 }
 
-// Оператор присваивания
 List &List::operator=(const List &other) {
-    if (this == &other) return *this; // Защита от самоприсваивания
+    if (this == &other) return *this;
 
-    // Освобождаем текущие ресурсы
     while (top) {
         Node *temp = top;
         top = top->next;
         delete temp;
     }
 
-    // Создаём глубокую копию
     Node *current = other.top;
     Node *tail = nullptr;
 
@@ -163,29 +157,27 @@ List &List::operator=(const List &other) {
         current = current->next;
     }
 
-    marker = nullptr; // Сбрасываем маркер
-    pred = nullptr;   // Сбрасываем предыдущий элемент
+    marker = nullptr;
+    pred = nullptr;
     return *this;
 }
 
-// Метод для получения длины списка
 int List::Length() const {
     int count = 0;
-    Node* current = top;
+    Node *current = top;
     while (current) {
         ++count;
         current = current->next;
     }
     return count;
 }
-// Метод для удаления лишних нулей в конце списка
+
 void List::RemoveTrailingZeros() {
-    if (!top) return; // Если список пуст, ничего не делаем
+    if (!top) return;
 
-    Node* current = top;
-    Node* lastNonZero = nullptr;
+    Node *current = top;
+    Node *lastNonZero = nullptr;
 
-    // Находим последний ненулевой элемент
     while (current) {
         if (current->data != 0) {
             lastNonZero = current;
@@ -193,21 +185,19 @@ void List::RemoveTrailingZeros() {
         current = current->next;
     }
 
-    // Если все элементы нули, оставляем один ноль
     if (!lastNonZero) {
         while (top->next) {
-            Node* temp = top;
+            Node *temp = top;
             top = top->next;
             delete temp;
         }
         return;
     }
 
-    // Удаляем все элементы после последнего ненулевого
     current = lastNonZero->next;
     lastNonZero->next = nullptr;
     while (current) {
-        Node* temp = current;
+        Node *temp = current;
         current = current->next;
         delete temp;
     }

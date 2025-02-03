@@ -1,27 +1,22 @@
 #include "BigNumber.h"
-#include <cstring>
-#include <algorithm>
 
-// Конструктор с параметром (целое число)
 BigNumber::BigNumber(int value) {
     if (value == 0) {
-        Add(0); // Если число равно нулю, добавляем одну цифру
+        Add(0);
     } else {
         while (value > 0) {
-            Add(value % 10); // Добавляем младшую цифру
+            Add(value % 10);
             value /= 10;
         }
     }
 }
 
-// Конструктор копирования
 BigNumber::BigNumber(const BigNumber &other) : List(other) {}
 
-// Конструктор из символьного массива
 BigNumber::BigNumber(const char *str) {
     for (int i = strlen(str) - 1; i >= 0; --i) {
         if (isdigit(str[i])) {
-            Add(str[i] - '0'); // Преобразуем символ в цифру
+            Add(str[i] - '0');
         }
     }
 }
@@ -33,27 +28,21 @@ static int compareBigNumbers(const BigNumber &a, const BigNumber &b) {
         return -1;
     if (lenA > lenB)
         return 1;
-    // Если длины равны – сравниваем, проходя от старшей цифры
-    // Для этого собираем строку (так как цифры хранятся в обратном порядке)
     std::string sa, sb;
-    {
-        List temp(a);
-        temp.Reset();
-        while (!temp.EoList()) {
-            sa += std::to_string(temp.GetCurrent());
-            temp.Move();
-        }
+    List temp1(a);
+    temp1.Reset();
+    while (!temp1.EoList()) {
+        sa += std::to_string(temp1.GetCurrent());
+        temp1.Move();
     }
-    {
-        List temp(b);
-        temp.Reset();
-        while (!temp.EoList()) {
-            sb += std::to_string(temp.GetCurrent());
-            temp.Move();
-        }
+    List temp2(b);
+    temp2.Reset();
+    while (!temp2.EoList()) {
+        sb += std::to_string(temp2.GetCurrent());
+        temp2.Move();
     }
-    std::reverse(sa.begin(), sa.end());
-    std::reverse(sb.begin(), sb.end());
+    BigNumber::reverseString(sa);
+    BigNumber::reverseString(sb);
     if (sa < sb)
         return -1;
     if (sa > sb)
@@ -61,7 +50,6 @@ static int compareBigNumbers(const BigNumber &a, const BigNumber &b) {
     return 0;
 }
 
-// Оператор сложения
 BigNumber BigNumber::operator+(const BigNumber &other) const {
     BigNumber result;
     Node *a = top;
@@ -79,31 +67,35 @@ BigNumber BigNumber::operator+(const BigNumber &other) const {
             b = b->next;
         }
 
-        // Добавляем только значимую цифру
         result.Add(sum % 10);
         carry = sum / 10;
     }
 
-    // Удаляем лишний ноль, если он есть в начале списка
-    result.Reset(); // Ставим маркер на начало
+    result.Reset();
     if (result.Length() > 1 && result.GetCurrent() == 0) {
-        result.Del(); // Удаляем лишний ноль
+        result.Del();
     }
 
     return result;
 }
+
 BigNumber BigNumber::operator-(const BigNumber &other) const {
     if (*this < other)
-        throw std::runtime_error("Negative result not supported");
+        std::cout << "Negative result not supported\n";
     BigNumber result;
     int carry = 0;
-    // Для вычитания проходим по цифрам (числа хранятся в обратном порядке)
     List temp1(*this), temp2(other);
     temp1.Reset();
     temp2.Reset();
     while (!temp1.EoList() || !temp2.EoList()) {
-        int a = (!temp1.EoList() ? temp1.GetCurrent() : 0);
-        int b = (!temp2.EoList() ? temp2.GetCurrent() : 0);
+        int a = 0;
+        if (!temp1.EoList()) {
+            a = temp1.GetCurrent();
+        }
+        int b = 0;
+        if (!temp2.EoList()) {
+            b = temp2.GetCurrent();
+        }
         int sub = a - b - carry;
         if (sub < 0) {
             sub += 10;
@@ -120,9 +112,9 @@ BigNumber BigNumber::operator-(const BigNumber &other) const {
 }
 
 BigNumber BigNumber::operator*(const BigNumber &other) const {
-    List result; // Результат в виде списка (цифры в обратном порядке)
-    Node *b = other.top;  // Перебираем цифры второго числа (от младшего к старшему)
-    int shift = 0;        // Сдвиг (количество нулей для умножения на 10^shift)
+    List result;
+    Node *b = other.top;
+    int shift = 0;
 
     while (b) {
         Node *a = top;
@@ -142,14 +134,12 @@ BigNumber BigNumber::operator*(const BigNumber &other) const {
             intermediate.Add(carry);
         }
 
-        // Складываем промежуточный результат с уже накопленным результатом
         result = addLists(result, intermediate);
         b = b->next;
         ++shift;
     }
 
     result.RemoveTrailingZeros();
-    // Используем новый конструктор для копирования готового списка в BigNumber
     BigNumber finalResult(result);
     finalResult.RemoveTrailingZeros();
     return finalResult;
@@ -170,7 +160,6 @@ BigNumber &BigNumber::operator*=(const BigNumber &other) {
     return *this;
 }
 
-// Операторы сравнения
 bool BigNumber::operator==(const BigNumber &other) const {
     return compareBigNumbers(*this, other) == 0;
 }
@@ -196,9 +185,8 @@ bool BigNumber::operator<=(const BigNumber &other) const {
 }
 
 
-// Оператор вывода в поток
 std::ostream &operator<<(std::ostream &os, const BigNumber &num) {
-    List temp(num); // Создаём копию для обхода
+    List temp(num);
     temp.Reset();
     std::string result;
 
@@ -207,12 +195,11 @@ std::ostream &operator<<(std::ostream &os, const BigNumber &num) {
         temp.Move();
     }
 
-    std::reverse(result.begin(), result.end()); // Переворачиваем строку
+    BigNumber::reverseString(result);
     os << result;
     return os;
 }
 
-// Длина числа
 int BigNumber::Length() const {
     int count = 0;
     Node *current = top;
@@ -232,6 +219,7 @@ int BigNumber::Length() {
     }
     return count;
 }
+
 int BigNumber::getDigit(int index) const {
     int i = 0;
     List temp(*this);
@@ -242,5 +230,15 @@ int BigNumber::getDigit(int index) const {
         ++i;
         temp.Move();
     }
-    throw std::out_of_range("Digit index out of range");
+    std::cout << "Digit index out of range\n";
+    return -1;
 }
+
+void BigNumber::reverseString(std::string &str) {
+    if (str.empty())return;
+
+    size_t left = 0, right = str.size() - 1;
+    while (left < right)
+        std::swap(str[left++], str[right--]);
+}
+

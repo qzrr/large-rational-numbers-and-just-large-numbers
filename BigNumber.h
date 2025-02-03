@@ -2,22 +2,17 @@
 #define COURSEWORK1_BIGNUMBER_H
 
 #include "List.h"
+#include <cstring>
 #include <string>
 
 class BigNumber : public List {
+
 public:
-    // Конструктор с параметром (целое число)
     BigNumber(int value = 0);
-
-    // Конструктор копирования
     BigNumber(const BigNumber &other);
-
-    // Конструктор из символьного массива
     BigNumber(const char *str);
-
     BigNumber(const List &list) : List(list) {}
 
-    // Оператор сложения
     BigNumber operator+(const BigNumber &other) const;
     BigNumber operator-(const BigNumber &other) const;
     BigNumber operator*(const BigNumber &other) const;
@@ -33,15 +28,17 @@ public:
     bool operator>=(const BigNumber &other) const;
     bool operator<=(const BigNumber &other) const;
 
-    // Оператор вывода в поток
     friend std::ostream &operator<<(std::ostream &os, const BigNumber &num);
 
-    // Длина числа
     int Length() const override;
-
     int Length();
-    ~BigNumber() {};
+
+    ~BigNumber() = default;
+
     int getDigit(int index) const;
+
+    static void reverseString(std::string &str);
+
 };
 
 #endif //COURSEWORK1_BIGNUMBER_H

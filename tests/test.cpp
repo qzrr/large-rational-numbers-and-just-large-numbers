@@ -5,7 +5,6 @@
 #include "../BigNumber.h"
 #include "../BigRacNumber.h"
 #include "../List.h"
-
 // Глобальная переменная для подсчёта ошибок
 static int testFailures = 0;
 
@@ -282,6 +281,7 @@ void testListOperations() {
 }
 
 int main() {
+    system("chcp 65001");
     std::cout << "Запуск тестов...\n";
 
     testBigNumberConstructors();
