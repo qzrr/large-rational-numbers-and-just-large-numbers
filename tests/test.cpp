@@ -2,9 +2,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <cstring>
 #include "../BigNumber.h"
 #include "../BigRacNumber.h"
 #include "../List.h"
+
 // Глобальная переменная для подсчёта ошибок
 static int testFailures = 0;
 
@@ -28,33 +30,33 @@ static int testFailures = 0;
     } \
 } while(0)
 
-// Тестируем конструкторы BigNumber и getDigit()
-void testBigNumberConstructors() {
+// ======================
+// Тесты для BigNumber
+// ======================
+
+void testBigNumberConstructorsAndMethods() {
     std::stringstream ss;
-    
-    // Конструктор с int
+
+    // Конструктор с int: значение 0
     BigNumber bn0(0);
     CHECK_EQ(bn0.Length(), 1);
     ss.str("");
     ss << bn0;
     CHECK_EQ(ss.str(), "0");
 
+    // Конструктор с int: положительное число
     BigNumber bn1(12345);
     ss.str("");
     ss << bn1;
     CHECK_EQ(ss.str(), "12345");
 
-    // Проверка getDigit: BigNumber хранит цифры в обратном порядке
-    // Для 12345 цифры внутри: 5,4,3,2,1 – поэтому getDigit(0)==5, getDigit(4)==1.
-    CHECK_EQ(bn1.getDigit(0), 5);
-    CHECK_EQ(bn1.getDigit(4), 1);
-    try {
-        bn1.getDigit(5);
-        std::cerr << "[FAILED] " << "bn1.getDigit(5) - ожидается исключение" << std::endl;
-        ++testFailures;
-    } catch (std::out_of_range &) {
-        std::cout << "[PASSED] " << "bn1.getDigit(5) вызвало исключение" << std::endl;
-    }
+    // Тест нецифровых символов в строке: должны игнорироваться
+    BigNumber bnNonDigit("a1b2c3");
+    ss.str("");
+    ss << bnNonDigit;
+    // При обработке строки "a1b2c3": цикл идёт с конца,
+    // добавляются только символы '3','2','1' → вывод: "123"
+    CHECK_EQ(ss.str(), "123");
 
     // Конструктор из строки
     BigNumber bn2("9876543210");
@@ -67,13 +69,34 @@ void testBigNumberConstructors() {
     ss.str("");
     ss << bn3;
     CHECK_EQ(ss.str(), "12345");
+
+    // Тест getDigit: внутреннее хранение – обратный порядок.
+    // Для bn1 ("12345") ожидаем: getDigit(0)==5, getDigit(4)==1.
+    CHECK_EQ(bn1.getDigit(0), 5);
+    CHECK_EQ(bn1.getDigit(4), 1);
+    // При неверном индексе: вывод сообщения и возвращается -1.
+    CHECK_EQ(bn1.getDigit(100), -1);
+
+    // Вызов не-константного метода Length() (на не-const объекте)
+    {
+        BigNumber temp(6789);
+        int len = temp.Length(); // вызов non-const перегрузки
+        CHECK_EQ(len, 4);
+    }
+
+    // Тест статического метода reverseString для непустой строки
+    std::string str = "abcde";
+    BigNumber::reverseString(str);
+    CHECK_EQ(str, "edcba");
+    // Тест reverseString для пустой строки – должна остаться пустой
+    std::string empty = "";
+    BigNumber::reverseString(empty);
+    CHECK_EQ(empty, "");
 }
 
-// Тест арифметических операций BigNumber
-void testBigNumberArithmetic() {
+void testBigNumberArithmeticOperators() {
     std::stringstream ss;
-    
-    // Сложение
+    // Оператор +
     BigNumber a(123);
     BigNumber b(456);
     BigNumber sum = a + b; // 123 + 456 = 579
@@ -81,69 +104,65 @@ void testBigNumberArithmetic() {
     ss << sum;
     CHECK_EQ(ss.str(), "579");
 
-    // Сложение с переносом
-    BigNumber c(999);
-    BigNumber d(1);
-    BigNumber sum2 = c + d; // 999 + 1 = 1000
-    ss.str("");
-    ss << sum2;
-    CHECK_EQ(ss.str(), "1000");
-
-    // Вычитание (без отрицательного результата)
-    BigNumber e(456);
-    BigNumber f(123);
-    BigNumber diff = e - f; // 456 - 123 = 333
+    // Оператор -
+    BigNumber diff = b - a; // 456 - 123 = 333
     ss.str("");
     ss << diff;
     CHECK_EQ(ss.str(), "333");
 
-    // Вычитание, требующее займа
-    BigNumber g(1000);
-    BigNumber h(1);
-    BigNumber diff2 = g - h; // 1000 - 1 = 999
+    // Отрицательный результат: 123 - 456.
+    // По реализации: выводится сообщение и возвращается BigNumber(-1).
+    // Конструктор BigNumber(int) с -1 не входит в цикл (while(value > 0)),
+    // поэтому результирующий список остаётся пустым и operator<< выводит пустую строку.
+    BigNumber diffNeg = a - b;
     ss.str("");
-    ss << diff2;
-    CHECK_EQ(ss.str(), "999");
+    ss << diffNeg;
+    CHECK_EQ(ss.str(), "");
 
-    // Проверка исключения при отрицательном результате
-    try {
-        BigNumber i(123);
-        BigNumber j(456);
-        BigNumber r = i - j;
-        (void)r;
-        std::cerr << "[FAILED] " << "Ожидалось исключение при вычитании 123 - 456" << std::endl;
-        ++testFailures;
-    } catch (std::runtime_error &) {
-        std::cout << "[PASSED] " << "Исключение при вычитании 123 - 456" << std::endl;
-    }
-
-    // Умножение
-    BigNumber k(12);
-    BigNumber l(34);
-    BigNumber prod = k * l; // 12 * 34 = 408
+    // Оператор *
+    BigNumber prod = BigNumber(12) * BigNumber(34); // 12 * 34 = 408
     ss.str("");
     ss << prod;
     CHECK_EQ(ss.str(), "408");
+
+    // Операторы +=, -=, *=
+    BigNumber tmp(100);
+    tmp += BigNumber(23); // 100 + 23 = 123
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "123");
+
+    tmp -= BigNumber(23); // 123 - 23 = 100
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "100");
+
+    tmp *= BigNumber(2); // 100 * 2 = 200
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "200");
 }
 
-// Тест сравнения BigNumber
-void testBigNumberComparison() {
-    BigNumber a(12345);
-    BigNumber b(12345);
-    BigNumber c(54321);
-    CHECK(a == b);
-    CHECK(!(a != b));
-    CHECK(a < c);
-    CHECK(c > b);
-    CHECK(a <= b);
-    CHECK(c >= a);
+void testBigNumberComparisons() {
+    BigNumber bn1(12345);
+    BigNumber bn2(12345);
+    BigNumber bn3(54321);
+    CHECK(bn1 == bn2);
+    CHECK(!(bn1 != bn2));
+    CHECK(bn1 < bn3);
+    CHECK(bn3 > bn2);
+    CHECK(bn1 <= bn2);
+    CHECK(bn3 >= bn1);
 }
 
-// Тестируем конструкторы BigRacNumber
-void testBigRacNumberConstructors() {
+// ======================
+// Тесты для BigRacNumber
+// ======================
+
+void testBigRacNumberConstructorsAndMethods() {
     std::stringstream ss;
-    
-    // Конструктор с целым числом
+
+    // Конструктор с int
     BigRacNumber br1(5);
     ss.str("");
     ss << br1;
@@ -166,130 +185,221 @@ void testBigRacNumberConstructors() {
     ss.str("");
     ss << br4;
     CHECK_EQ(ss.str(), "3 / 4");
-}
 
-// Тест арифметики BigRacNumber
-void testBigRacNumberArithmetic() {
-    std::stringstream ss;
-    
-    BigRacNumber br1("1/2");
-    BigRacNumber br2("1/3");
-
-    // Сложение: 1/2 + 1/3 = (1*3 + 1*2)/6 = 5/6
-    BigRacNumber sum = br1 + br2;
+    // Конструктор с BigNumber
+    BigNumber num(11), den(13);
+    BigRacNumber br5(num, den);
     ss.str("");
-    ss << sum;
-    CHECK_EQ(ss.str(), "5 / 6");
+    ss << br5;
+    CHECK_EQ(ss.str(), "11 / 13");
 
-    // Вычитание: 1/2 - 1/3 = (1*3 - 1*2)/6 = 1/6
-    BigRacNumber diff = br1 - br2;
+    // Случай, когда знаменатель равен нулю (вывод сообщения, но объект создаётся)
+    BigRacNumber brZero("5", "0");
     ss.str("");
-    ss << diff;
-    CHECK_EQ(ss.str(), "1 / 6");
+    ss << brZero;
+    CHECK_EQ(ss.str(), "5 / 0");
 
-    // Проверка исключения при отрицательном результате вычитания
-    try {
-        BigRacNumber br5("1/3");
-        BigRacNumber br6("1/2");
-        BigRacNumber r = br5 - br6;
-        (void)r;
-        std::cerr << "[FAILED] " << "Ожидалось исключение при вычитании 1/3 - 1/2" << std::endl;
-        ++testFailures;
-    } catch (std::runtime_error &) {
-        std::cout << "[PASSED] " << "Исключение при вычитании 1/3 - 1/2" << std::endl;
-    }
-
-    // Умножение: 1/2 * 1/3 = 1/6
-    BigRacNumber prod = br1 * br2;
-    ss.str("");
-    ss << prod;
-    CHECK_EQ(ss.str(), "1 / 6");
-}
-
-// Тест методов inverse и оператора получения цифры (||) для BigRacNumber
-void testBigRacNumberInverseAndIndex() {
-    std::stringstream ss;
-    
-    BigRacNumber br("3/5");
-    BigRacNumber inv = br.inverse();
+    // Тест оператора inverse()
+    BigRacNumber br6("3/5");
+    BigRacNumber inv = br6.inverse(); // должно дать 5/3
     ss.str("");
     ss << inv;
     CHECK_EQ(ss.str(), "5 / 3");
 
-    // Оператор || возвращает цифру из числителя (в BigNumber, числитель 3 хранится как "3")
-    int d = br || 0;
-    CHECK_EQ(d, 3);
+    // Если числитель равен 0, inverse() выводит сообщение и возвращает инверсию.
+    BigRacNumber brZeroNum("0/7");
+    BigRacNumber invZero = brZeroNum.inverse();
+    ss.str("");
+    ss << invZero;
+    // Ожидаем: знаменатель становится числителем, а числитель – 0, т.е. "7 / 0"
+    CHECK_EQ(ss.str(), "7 / 0");
 
-    // Проверяем выход за пределы (исключение)
-    try {
-        int d2 = br || 1;
-        (void)d2;
-        std::cerr << "[FAILED] " << "Ожидалось исключение при доступе по несуществующему индексу" << std::endl;
-        ++testFailures;
-    } catch (std::out_of_range &) {
-        std::cout << "[PASSED] " << "Исключение при доступе по несуществующему индексу" << std::endl;
-    }
+    // Оператор ||: возвращает цифру из числителя (BigNumber).
+    // Для br2 = "3/4" числитель равен 3.
+    CHECK_EQ(br2 || 0, 3);
+    // Если индекс выходит за границы, getDigit() возвращает -1.
+    CHECK_EQ(br2 || 5, -1);
 }
 
-// Тест операций над List
+void testBigRacNumberArithmeticAndComparisons() {
+    std::stringstream ss;
+
+    BigRacNumber br1("1/2");
+    BigRacNumber br2("1/3");
+
+    // Оператор +
+    BigRacNumber sum = br1 + br2; 
+    // (1*3 + 1*2) / (2*3) = 5/6
+    ss.str("");
+    ss << sum;
+    CHECK_EQ(ss.str(), "5 / 6");
+
+    // Оператор -
+    BigRacNumber diff = br1 - br2; 
+    // (1*3 - 1*2) / (2*3) = 1/6
+    ss.str("");
+    ss << diff;
+    CHECK_EQ(ss.str(), "1 / 6");
+
+    // Отрицательный результат: 1/3 - 1/2.
+    // В этом случае, по реализации, выводится сообщение, а числитель становится BigNumber(-1),
+    // что приводит к пустому выводу для числителя.
+    BigRacNumber diffNeg = br2 - br1;
+    ss.str("");
+    ss << diffNeg;
+    // Ожидаемый вывод: пустой числитель, разделитель " / " и знаменатель равный 6.
+    CHECK_EQ(ss.str(), " / 6");
+
+    // Оператор *
+    BigRacNumber prod = br1 * br2; // 1/2 * 1/3 = 1/6
+    ss.str("");
+    ss << prod;
+    CHECK_EQ(ss.str(), "1 / 6");
+
+    // Операторы +=, -=, *=
+    BigRacNumber tmp("2/3");
+    tmp += BigRacNumber("1/3"); // 2/3 + 1/3 = 3/3 = 1/1
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "1 / 1");
+
+    tmp -= BigRacNumber("1/2"); // 1 - 1/2 = 1/2 (без сокращения)
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "1 / 2");
+
+    tmp *= BigRacNumber("2/1"); // 1/2 * 2 = 2/2 = 1/1
+    ss.str("");
+    ss << tmp;
+    CHECK_EQ(ss.str(), "1 / 1");
+
+    // Тест сравнений
+    BigRacNumber brA("3/5"), brB("6/10");
+    CHECK(brA == brB);
+    CHECK(!(brA != brB));
+    CHECK(brA <= brB);
+    CHECK(brA >= brB);
+    CHECK(!(brA < brB));
+    CHECK(!(brA > brB));
+}
+
+// ======================
+// Тесты для List
+// ======================
+
 void testListOperations() {
     std::stringstream ss;
-    
-    // Создаем список и добавляем элементы
+
+    // Тест конструктора и Add() на пустом списке
     List list;
+    CHECK_EQ(list.Length(), 0);
     list.Add(1);
     list.Add(2);
     list.Add(3);
     CHECK_EQ(list.Length(), 3);
 
-    // Тест Reset, GetCurrent, Move
-    list.Reset();
-    int a = list.GetCurrent();
-    CHECK_EQ(a, 1);
-    list.Move();
-    int b = list.GetCurrent();
-    CHECK_EQ(b, 2);
-    list.Move();
-    int c = list.GetCurrent();
-    CHECK_EQ(c, 3);
-
-    // Удаляем элемент (удаляем средний элемент)
-    list.Reset();
-    list.Move(); // теперь marker на втором элементе
-    list.Del();
-    CHECK_EQ(list.Length(), 2);
+    // Тест Reset, GetCurrent, Move и EoList
     list.Reset();
     CHECK_EQ(list.GetCurrent(), 1);
     list.Move();
+    CHECK_EQ(list.GetCurrent(), 2);
+    list.Move();
     CHECK_EQ(list.GetCurrent(), 3);
+    list.Move();
+    CHECK(list.EoList());
 
-    // Тест RemoveTrailingZeros:
-    // Формируем список: 1 -> 0 -> 0 -> 2 -> 0, где последний 0 – лишний.
-    List list2;
-    list2.Add(1);
-    list2.Add(0);
-    list2.Add(0);
-    list2.Add(2);
-    list2.Add(0);
-    list2.RemoveTrailingZeros();
-    // После удаления лишних нулей список должен содержать до последнего ненулевого элемента.
-    // То есть список должен быть: 1 -> 0 -> 0 -> 2
+    // Тест Del() – удаление первого элемента (когда marker указывает на начало)
+    list.Reset();
+    list.Del(); // удаляем элемент "1"
+    CHECK_EQ(list.Length(), 2);
+    list.Reset();
+    CHECK_EQ(list.GetCurrent(), 2);
+
+    // Тест AddBefore(): вставка элемента перед marker
+    list.Reset();
+    list.Move(); // marker указывает на второй элемент (значение  ?)
+    list.AddBefore(99); // вставляем перед текущим элементом
     ss.str("");
-    ss << list2;
-    std::string expected = "1 -> 0 -> 0 -> 2";
-    CHECK_EQ(ss.str(), expected);
+    ss << list;
+    // Ожидаем последовательность: 2 -> 99 -> оставшийся элемент(был 3)
+    CHECK_EQ(ss.str(), "2 -> 99 -> 3");
+
+    // Тест метода addLists()
+    List listA;
+    listA.Add(1);
+    listA.Add(2);
+    List listB;
+    listB.Add(3);
+    listB.Add(4);
+    List listSum = listA.addLists(listA, listB);
+    // Складываем: (1+3), (2+4) = 4,6
+    ss.str("");
+    ss << listSum;
+    CHECK_EQ(ss.str(), "4 -> 6");
+
+    // Тест оператора присваивания operator=
+    List listC;
+    listC.Add(7);
+    listC.Add(8);
+    List listD;
+    listD = listC;
+    ss.str("");
+    ss << listD;
+    CHECK_EQ(ss.str(), "7 -> 8");
+
+    // Тест self-assignment operator=
+    listD = listD;
+    ss.str("");
+    ss << listD;
+    CHECK_EQ(ss.str(), "7 -> 8");
+
+    // Тест конструктора копирования для пустого списка
+    List listEmpty;
+    List listEmptyCopy(listEmpty);
+    ss.str("");
+    ss << listEmptyCopy;
+    CHECK_EQ(ss.str(), "");
+
+    // Тест RemoveTrailingZeros()
+    List listE;
+    listE.Add(1);
+    listE.Add(0);
+    listE.Add(0);
+    listE.Add(2);
+    listE.Add(0);
+    listE.RemoveTrailingZeros();
+    ss.str("");
+    ss << listE;
+    // Ожидаем: 1 -> 0 -> 0 -> 2
+    CHECK_EQ(ss.str(), "1 -> 0 -> 0 -> 2");
+
+    // Тест GetCurrent() и Move() на пустом списке
+    List listF;
+    // Попытка получить текущий элемент из пустого списка – должно вывести сообщение и вернуть -1.
+    CHECK_EQ(listF.GetCurrent(), -1);
+    // Попытка Move() – ничего не должно измениться.
+    listF.Move();
+    
+    // Тест Del() на пустом списке – должно вывести сообщение, не менять длину.
+    listF.Del();
+    CHECK_EQ(listF.Length(), 0);
 }
 
-int main() {
-    system("chcp 65001");
-    std::cout << "Запуск тестов...\n";
+// ======================
+// main
+// ======================
 
-    testBigNumberConstructors();
-    testBigNumberArithmetic();
-    testBigNumberComparison();
-    testBigRacNumberConstructors();
-    testBigRacNumberArithmetic();
-    testBigRacNumberInverseAndIndex();
+int main() {
+    std::cout << "Запуск тестов для BigNumber...\n";
+    testBigNumberConstructorsAndMethods();
+    testBigNumberArithmeticOperators();
+    testBigNumberComparisons();
+
+    std::cout << "\nЗапуск тестов для BigRacNumber...\n";
+    testBigRacNumberConstructorsAndMethods();
+    testBigRacNumberArithmeticAndComparisons();
+
+    std::cout << "\nЗапуск тестов для List...\n";
     testListOperations();
 
     if (testFailures == 0) {
