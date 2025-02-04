@@ -21,7 +21,7 @@ BigNumber::BigNumber(const char *str) {
     }
 }
 
-static int compareBigNumbers(const BigNumber &a, const BigNumber &b) {
+int BigNumber::compareBigNumbers(const BigNumber &a, const BigNumber &b) {
     int lenA = a.Length();
     int lenB = b.Length();
     if (lenA < lenB)

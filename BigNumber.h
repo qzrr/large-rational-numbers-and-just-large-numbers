@@ -6,7 +6,8 @@
 #include <string>
 
 class BigNumber : public List {
-
+private:
+    static int compareBigNumbers(const BigNumber &a, const BigNumber &b);
 public:
     BigNumber(int value = 0);
     BigNumber(const BigNumber &other);

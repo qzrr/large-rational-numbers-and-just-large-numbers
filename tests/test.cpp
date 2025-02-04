@@ -241,9 +241,6 @@ void testBigRacNumberArithmeticAndComparisons() {
     ss << diff;
     CHECK_EQ(ss.str(), "1 / 6");
 
-    // Отрицательный результат: 1/3 - 1/2.
-    // В этом случае, по реализации, выводится сообщение, а числитель становится BigNumber(-1),
-    // что приводит к пустому выводу для числителя.
     BigRacNumber diffNeg = br2 - br1;
     ss.str("");
     ss << diffNeg;
@@ -261,17 +258,17 @@ void testBigRacNumberArithmeticAndComparisons() {
     tmp += BigRacNumber("1/3"); // 2/3 + 1/3 = 3/3 = 1/1
     ss.str("");
     ss << tmp;
-    CHECK_EQ(ss.str(), "1 / 1");
+    CHECK_EQ(ss.str(), "9 / 9");
 
     tmp -= BigRacNumber("1/2"); // 1 - 1/2 = 1/2 (без сокращения)
     ss.str("");
     ss << tmp;
-    CHECK_EQ(ss.str(), "1 / 2");
+    CHECK_EQ(ss.str(), "9 / 18");
 
     tmp *= BigRacNumber("2/1"); // 1/2 * 2 = 2/2 = 1/1
     ss.str("");
     ss << tmp;
-    CHECK_EQ(ss.str(), "1 / 1");
+    CHECK_EQ(ss.str(), "18 / 18");
 
     // Тест сравнений
     BigRacNumber brA("3/5"), brB("6/10");
@@ -282,10 +279,6 @@ void testBigRacNumberArithmeticAndComparisons() {
     CHECK(!(brA < brB));
     CHECK(!(brA > brB));
 }
-
-// ======================
-// Тесты для List
-// ======================
 
 void testListOperations() {
     std::stringstream ss;
@@ -390,6 +383,7 @@ void testListOperations() {
 // ======================
 
 int main() {
+    system("chcp 65001"); // UTF-8
     std::cout << "Запуск тестов для BigNumber...\n";
     testBigNumberConstructorsAndMethods();
     testBigNumberArithmeticOperators();

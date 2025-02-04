@@ -45,6 +45,7 @@ BigRacNumber BigRacNumber::operator-(const BigRacNumber &other) const {
     BigNumber den = denominator * other.denominator;
     if (num < BigNumber(0))
         std::cout<<"Negative result not supported in subtraction\n";
+
     return BigRacNumber(num, den);
 }
 
@@ -107,5 +108,3 @@ BigRacNumber BigRacNumber::inverse() const {
 int BigRacNumber::operator||(int index) const {
     return numerator.getDigit(index);
 }
-
-

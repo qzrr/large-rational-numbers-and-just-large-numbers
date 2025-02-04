@@ -26,8 +26,6 @@ int main() {
         std::cout << "a <= b" << std::endl;
     }
 
-    std::cout << "Digit b with index 2 (low-order digits): " << b.getDigit(2) << std::endl;
-
     std::cout << "\n==== BigRacNumber ====" << std::endl;
     BigRacNumber r1(5);
     BigRacNumber r2("3/4");
@@ -52,7 +50,5 @@ int main() {
         std::cout << "r1 >= r2" << std::endl;
     }
 
-    int index = 1;
-    std::cout << "The digit of the numerator r2 with the index " << index << " = " << (r2 || index) << std::endl;
     return 0;
 }
